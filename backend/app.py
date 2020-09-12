@@ -52,13 +52,33 @@ def mirror(name):
 
 @app.route("/restaurants", methods=['GET'])
 def get_all_restaurants():
-    return create_response({"restaurants": db.get('restaurants')})
+  if request.args:
+    restaurants = db.get("restaurants");
+    if "minRating" in request.args:
+      filtered_res = []
+      min_rate = request.args["minRating"]
+      min_rate = int(min_rate)
+      for r in restaurants:
+        if r["rating"] >= min_rate:
+          filtered_res.append(r)
+      if filtered_res:
+        return create_response({"restaurants": filtered_res})
+      else:
+        return create_response(status=404, message="No restaurant with satisfying the query exists")
+  return create_response({"restaurants": db.get("restaurants")})
+
+@app.route("/restaurants/<id>", methods=['GET'])
+def get_restaurant_by_id(id):
+  res = db.getById('restaurants', int(id))
+  if res is None:
+    return create_response(status=404, message="No restaurant with this id exists")
+  return create_response({"restaurants": res})
 
 @app.route("/restaurants/<id>", methods=['DELETE'])
 def delete_restaurant(id):
-    if db.getById('restaurants', int(id)) is None:
+    if db.getById("restaurants", int(id)) is None:
         return create_response(status=404, message="No restaurant with this id exists")
-    db.deleteById('restaurants', int(id))
+    db.deleteById("restaurants", int(id))
     return create_response(message="Restaurant deleted")
 
 
